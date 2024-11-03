@@ -9,6 +9,7 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+/.plastic/
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
@@ -46,6 +47,8 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
+*.vsconfig
+GlobalSuppressions.cs
 
 # Unity3D generated meta files
 *.pidb.meta
