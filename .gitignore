@@ -48,6 +48,7 @@ ExportedObj/
 *.opendb
 *.VC.db
 *.vsconfig
+*.editorconfig
 GlobalSuppressions.cs
 
 # Unity3D generated meta files
