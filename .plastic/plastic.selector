@@ -1,4 +1,0 @@
-repository "ChemLearn@boasbakker123@cloud"
-  path "/"
-    br "/main"
-    co "/main"
