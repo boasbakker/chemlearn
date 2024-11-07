@@ -25,18 +25,40 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
     public static SortedSet<int> fouteValenties = new();
     public List<AtoomScript2D> atomen = new();
     public Dictionary<(int, int), List<UILineRendererList>> lijnObjecten = new();
+    [SerializeField] Image geselecteerd;
+    [SerializeField] RectTransform rectTransform;
+    [SerializeField] RectTransform middle;
+    [SerializeField] RectTransform safeArea;
+
+    void Destroy(AtoomScript2D atoom)
+    {
+        atomen.Remove(atoom);
+        OefenModusScript.getekendeAtomen.Remove(atoom);
+        OefenModusScript.antwoordAtomen.Remove(atoom);
+        Destroy(atoom.gameObject);
+    }
+
+    void Destroy(UILineRendererList binding)
+    {
+        OefenModusScript.getekendeBindingen.Remove(binding);
+        OefenModusScript.antwoordBindingen.Remove(binding);
+        Destroy(binding.gameObject);
+    }
 
     public class Actie
     {
         public int nr1 = -1;
         public int nr2 = -1;
         public int type = 1;
-        public GameObject atoom;
+        public AtoomScript2D atoom;
         public Vector2 a, b;
     }
 
     public void ZetAtoom(TMP_Text waarde)
     {
+        geselecteerd.color = Color.white;
+        geselecteerd = waarde.GetComponentInParent<Image>();
+        geselecteerd.color = new(0.9f, 0.9f, 0.9f);
         atoom = waarde.text;
     }
 
@@ -65,9 +87,8 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
             foreach (var obj in lijnObjecten[(act.nr1, act.nr2)])
             {
                 if (obj == null) continue;
-                OefenModusScript.getekendeBindingen.Remove(obj);
                 obj.ClearPoints();
-                Destroy(obj.gameObject);
+                Destroy(obj);
             }
             lijnObjecten[(act.nr1, act.nr2)].Clear();
             for (int i = 1; i <= maxBindingen; i++)
@@ -96,9 +117,7 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
                 klikNr = -1;
                 klikPositie = null;
             }
-            OefenModusScript.getekendeAtomen.Remove(act.atoom.GetComponent<AtoomScript2D>());
-            atomen.PopBack();
-            Destroy(act.atoom);
+            Destroy(act.atoom.GetComponent<AtoomScript2D>());
             n--;
             bindingen.PopBack();
             atoomsoort.PopBack();
@@ -113,6 +132,7 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
 
     public void ResetMolecuul()
     {
+        OefenModusScript.VerwijderAlles();
         foreach (var act in acties)
         {
             if (act.nr1 != -1)
@@ -121,7 +141,7 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
                 {
                     if (obj == null) continue;
                     obj.ClearPoints();
-                    Destroy(obj.gameObject);
+                    Destroy(obj);
                 }
             }
             if (act.atoom != null)
@@ -129,7 +149,6 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
                 Destroy(act.atoom);
             }
         }
-        OefenModusScript.VerwijderAlles();
         klikNr = -1;
         klikPositie = null;
         atomen.Clear();
@@ -149,8 +168,10 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
     public void TekenLijn(Vector2 a, Vector2 b, float offSet, int nr1, int nr2, bool extra, bool onzichtbaar = false)
     {
         UILineRendererList lijnRenderer = Instantiate(lijnPrefab, transform);
+        lijnRenderer.transform.localScale = Vector3.one;
         if (extra) lijnRenderer.color = Color.red;
         lijnRenderer.transform.SetParent(lijnPrefab.transform.parent);
+        lijnRenderer.transform.position = middle.position;
         Vector2 richting = b - a;
         Vector2 loodRecht = new Vector2(-richting.y, richting.x).normalized;
         loodRecht *= offSet;
@@ -166,17 +187,17 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
             lijnObjecten[(nr1, nr2)].Add(lijnRenderer);
             lijnObjecten.TryAdd((nr2, nr1), new());
             lijnObjecten[(nr2, nr1)].Add(lijnRenderer);
-        }
-        if (OefenModusScript.AanHetOefenen)
-        {
-            if (onzichtbaar)
+            if (OefenModusScript.AanHetOefenen)
             {
-                OefenModusScript.antwoordBindingen.Add(lijnRenderer);
-                lijnRenderer.gameObject.SetActive(false);
-            }
-            else
-            {
-                OefenModusScript.getekendeBindingen.Add(lijnRenderer);
+                if (onzichtbaar)
+                {
+                    OefenModusScript.antwoordBindingen.Add(lijnRenderer);
+                    lijnRenderer.gameObject.SetActive(false);
+                }
+                else
+                {
+                    OefenModusScript.getekendeBindingen.Add(lijnRenderer);
+                }
             }
         }
     }
@@ -242,7 +263,7 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    public void MaakBinding(Vector2 a, Vector2 b, int nr1, int nr2, GameObject atoomObj, int type = -1, bool onzichtbaar = false)
+    public void MaakBinding(Vector2 a, Vector2 b, int nr1, int nr2, AtoomScript2D atoomObj, int type = -1, bool onzichtbaar = false)
     {
         if (nr1 == nr2) return;
         if (type == -1)
@@ -289,7 +310,7 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
                 foreach (var obj in lijnObjecten[(nr1, nr2)])
                     if (obj != null) obj.ClearPoints();
                 foreach (var obj in lijnObjecten[(nr1, nr2)])
-                    if (obj != null) Destroy(obj.gameObject);
+                    if (obj != null) Destroy(obj);
                 lijnObjecten.Remove((nr1, nr2));
                 lijnObjecten.Remove((nr2, nr1));
             }
@@ -313,7 +334,7 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
         fixeerdeOctetten.Add(-1);
         fixeerdeWaterstof.Add(-1);
 
-        GameObject spawnedText = Instantiate(textPrefab, canvas.transform);
+        GameObject spawnedText = Instantiate(textPrefab, safeArea.transform);
         spawnedText.transform.SetSiblingIndex(6);
         RectTransform rect = spawnedText.GetComponent<RectTransform>();
         rect.anchoredPosition = positie;
@@ -337,7 +358,7 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
 
         if (klikPositie != null)
         {
-            MaakBinding((Vector2)klikPositie, rect.anchoredPosition, klikNr, atoomsoort.Count - 1, spawnedText, -1, onzichtbaar);
+            MaakBinding((Vector2)klikPositie, rect.anchoredPosition, klikNr, atoomsoort.Count - 1, atoomScript, -1, onzichtbaar);
         }
         else // anders wordt het in MaakBinding gecalled
         {
@@ -345,7 +366,7 @@ public class TekenScript : MonoBehaviour, IPointerClickHandler
             naamGever.GeefNaamGetekendeStructuur();
             Actie toevoeging = new()
             {
-                atoom = spawnedText
+                atoom = atoomScript
             };
             acties.Add(toevoeging);
         }

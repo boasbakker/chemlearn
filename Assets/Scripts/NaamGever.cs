@@ -8,6 +8,7 @@ using static Definities;
 using static Extensions;
 using static TekenScript;
 using TMPro;
+using UnityEngine.Windows;
 
 public class NaamGever : MonoBehaviour
 {
@@ -714,18 +715,18 @@ public class NaamGever : MonoBehaviour
                 .ThenBy(v => v.voorvoegsels, new ListComparer()).ToList();
         }
         else kandidaten = kandidaten
-            .OrderByDescending(v => v.hoofdGroepen.Count) // P-44.1.1
-            .ThenByDescending(v => v.aanhechtingsPunten.Count) // hier ga ik van uit, staat niet heel duidelijk beschreven
-            .ThenByDescending(v => v.cyclisch) // P-44.1.2.2
-            .ThenByDescending(v => v.atomen.Count) // P-44.3.2
-            .ThenByDescending(v => v.eenYnAchtervoegsels.Count) // P-44.4.1.1
-            .ThenByDescending(v => v.enen.Count) // P-44.4.1.2
-            .ThenBy(v => v.hoofdGroepen, new ListComparer()) // P-44.4.1.8
-            .ThenBy(v => v.aanhechtingsPunten, new ListComparer()) // P-44.4.1.9
-            .ThenBy(v => v.eenYnAchtervoegsels, new ListComparer()) // P-44.4.1.10
-            .ThenByDescending(v => v.voorvoegsels.Count) // P-45.2.1
-            .ThenBy(v => v.voorvoegsels, new ListComparer()) // P-45.2.2
-            .ToList();
+                .OrderByDescending(v => v.hoofdGroepen.Count) // P-44.1.1
+                .ThenByDescending(v => v.aanhechtingsPunten.Count) // hier ga ik van uit, staat niet heel duidelijk beschreven
+                .ThenByDescending(v => v.cyclisch) // P-44.1.2.2
+                .ThenByDescending(v => v.atomen.Count) // P-44.3.2
+                .ThenByDescending(v => v.eenYnAchtervoegsels.Count) // P-44.4.1.1
+                .ThenByDescending(v => v.enen.Count) // P-44.4.1.2
+                .ThenBy(v => v.hoofdGroepen, new ListComparer()) // P-44.4.1.8
+                .ThenBy(v => v.aanhechtingsPunten, new ListComparer()) // P-44.4.1.9
+                .ThenBy(v => v.eenYnAchtervoegsels, new ListComparer()) // P-44.4.1.10
+                .ThenByDescending(v => v.voorvoegsels.Count) // P-45.2.1
+                .ThenBy(v => v.voorvoegsels, new ListComparer()) // P-45.2.2
+                .ToList();
         var stamVerbinding = kandidaten[0];
         List<int> benzeen1 = new() { 1, 3, 5 };
         List<int> benzeen2 = new() { 2, 4, 6 };
@@ -892,10 +893,6 @@ public class NaamGever : MonoBehaviour
             gebruikPlaatsAanduiding = false;
         }
         if (stamVerbinding.atomen.Count == 2 && stamVerbinding.voorvoegsels.Count == 0)
-        {
-            gebruikPlaatsAanduiding = false;
-        }
-        if (stamVerbinding.hoofdGroepen.Count == 1 && stamVerbinding.hoofdGroepen[0] == 1)
         {
             gebruikPlaatsAanduiding = false;
         }
@@ -1093,9 +1090,8 @@ public class NaamGever : MonoBehaviour
                 {
                     string naam = GenereerNaamSubBoom(-1, hoofdGroep, i, -1).naam;
                     naamSucces = true;
-                    if (!OefenModusScript.AanHetOefenen)
-                        GUIUtility.systemCopyBuffer = naam;
-                    else return naam;
+                    if (OefenModusScript.AanHetOefenen)
+                        return naam;
                     return "Naam: " + naam;
                 }
             }
@@ -1105,6 +1101,13 @@ public class NaamGever : MonoBehaviour
         {
             return e.Message;
         }
+    }
+
+    public void KopieerNaam()
+    {
+        string input = GenereerNaam();
+        if (input.StartsWith("Naam: "))
+            GUIUtility.systemCopyBuffer = input[6..];
     }
 
     public void ResetMolecuul()

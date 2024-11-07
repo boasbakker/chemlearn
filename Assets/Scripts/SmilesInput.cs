@@ -202,17 +202,24 @@ public class SmilesInput : MonoBehaviour
     [SerializeField] TMP_InputField input;
     [SerializeField] NaamGever naamGever;
 
+    void VerwijderStereo(ref string text)
+    {
+        text = text.Replace("[C@@H]", "C");
+        text = text.Replace("[C@H]", "C");
+        text = text.Replace("[C@]", "C");
+        text = text.Replace("[C@@]", "C");
+        text = text.Replace("@", "");
+        text = text.Replace("/", "");
+        text = text.Replace(@"\", "");
+    }
+
     public void Submit()
     {
         naamGever.ResetMolecuul();
         try
         {
             string text = input.text;
-            text = text.Replace("[C@@H]", "C");
-            text = text.Replace("[C@H]", "C");
-            text = text.Replace("[C@]", "C");
-            text = text.Replace("[C@@]", "C");
-            text = text.Replace("@", "");
+            VerwijderStereo(ref text);
             LeesSmiles(in text, 0, text.Length - 1);
             naamGever.GeefNaamGetekendeStructuur();
         }

@@ -97,6 +97,12 @@ public class OrthographicCameraController : MonoBehaviour
             // Find the difference in the distances between each frame
             float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag;
 
+            if (Application.platform == RuntimePlatform.Android)
+            {
+                // Reverse zoom factor for Android to match WebGL behavior
+                deltaMagnitudeDiff = -deltaMagnitudeDiff;
+            }
+
             // Only update zoom if touches are in the appropriate phase
             if (touch1.phase == TouchPhase.Moved && touch2.phase == TouchPhase.Moved)
             {

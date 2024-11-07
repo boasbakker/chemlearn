@@ -396,16 +396,6 @@ public class TekenScript3D : MonoBehaviour
 
     void RenderStructuur(bool stop = true)
     {
-        waterstof.Clear();
-        if (!veranderd) return;
-        positie.Clear();
-        veranderd = false;
-        foreach (var obj in atoomObjecten) Destroy(obj);
-        foreach (var obj in bindingsObjecten) Destroy(obj);
-        atoomObjecten.Clear();
-        bindingsObjecten.Clear();
-        xs.Clear(); ys.Clear(); zs.Clear();
-        waarschuwing.SetActive(besteStructuur.minimaleAfstand < 10);
         if (stop)
         {
             eindTijd = DateTime.MaxValue;
@@ -414,6 +404,16 @@ public class TekenScript3D : MonoBehaviour
             Debug.Log($"minimaleAfstand: {besteStructuur.minimaleAfstand}");
             Debug.Log($"UiteindeAfstand: {besteStructuur.uiteindenAfstand}");
         }
+        if (!veranderd) return;
+        waterstof.Clear();
+        positie.Clear();
+        veranderd = false;
+        foreach (var obj in atoomObjecten) Destroy(obj);
+        foreach (var obj in bindingsObjecten) Destroy(obj);
+        atoomObjecten.Clear();
+        bindingsObjecten.Clear();
+        xs.Clear(); ys.Clear(); zs.Clear();
+        waarschuwing.SetActive(besteStructuur.minimaleAfstand < 10);
         foreach (var (a, b, c) in besteStructuur.bindingenTeMaken)
         {
             TekenLijn(a, b, c);
@@ -527,14 +527,14 @@ public class TekenScript3D : MonoBehaviour
         }
         catch
         {
-            Fout("Alleen één benzeen-achtige ring wordt ondersteund in 3D!");
+            if (!oefenModus) Fout("Alleen één benzeen-achtige ring wordt ondersteund in 3D!");
             return false;
         }
         for (int i = 0; i < n; i++)
         {
             if (OmringingsGetal(i) >= 8)
             {
-                Fout("Omringingsgetal 8 of hoger wordt ondersteund in 3D!");
+                Fout("Omringingsgetal 8 of hoger wordt niet ondersteund in 3D!");
                 return false;
             }
         }
@@ -580,6 +580,7 @@ public class TekenScript3D : MonoBehaviour
     }
     public void Terug()
     {
+        rendered = true;
         canvas.SetActive(true);
         canvas3D.SetActive(false);
     }

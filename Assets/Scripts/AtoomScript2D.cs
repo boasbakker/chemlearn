@@ -63,7 +63,6 @@ public class AtoomScript2D : MonoBehaviour
         }
         if (OefenModusScript.klikAtomen)
         {
-            GetComponent<Button>().transition = Selectable.Transition.None;
             if (OefenModusScript.selectie.Contains(this))
             {
                 image.color = Color.white;

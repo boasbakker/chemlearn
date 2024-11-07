@@ -14,6 +14,7 @@ using UnityEngine.UI.Extensions;
 using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 using NUnit.Framework.Constraints;
 using UnityEngine.UI;
+using Unity.VisualScripting;
 
 public class OefenModusScript : MonoBehaviour
 {
@@ -116,11 +117,14 @@ public class OefenModusScript : MonoBehaviour
         {
             if (huidigeModus == Modus.NaamgevingAndersom)
             {
-                getekendeBindingen.Clear();
+                tekenScript.ResetMolecuul();
+            }
+            else
+            {
                 getekendeAtomen.Clear();
+                getekendeBindingen.Clear();
                 antwoordAtomen.Clear();
                 antwoordBindingen.Clear();
-                tekenScript.ResetMolecuul();
             }
             klikAtomen = false;
             klikBindingen = false;
@@ -130,6 +134,7 @@ public class OefenModusScript : MonoBehaviour
             huidigeModus = Algemeen;
             JaNeeDropDown.gameObject.SetActive(false);
             naamGever.GeefNaamGetekendeStructuur();
+            goedAntwoordZichtbaar = false;
         }
     }
 
@@ -158,13 +163,15 @@ public class OefenModusScript : MonoBehaviour
         return false; // Position is within the safe zone
     }
 
-    void CheckAfstanden()
+    // voor geavanceerdere random moleculen die soms in de knoop raken
+    /*void CheckAfstanden()
     {
         ClosestPair3D closestPair3D = new();
         if (closestPair3D.FindClosestPair(posities) < 0.99f) throw new System.Exception("Afstand <1");
-    }
+    }*/
     public void SpawnMolecuul()
     {
+        tekenScript.ResetMolecuul();
     Opnieuw:
         try
         {
@@ -177,6 +184,7 @@ public class OefenModusScript : MonoBehaviour
     }
     public void SpawnMolecuulAnorganisch()
     {
+        tekenScript.ResetMolecuul();
     Opnieuw:
         try
         {
@@ -300,6 +308,7 @@ public class OefenModusScript : MonoBehaviour
     {
         if (AanHetOefenen) maxKoolstof = 10;
         else maxKoolstof = 20;
+        if (AanHetOefenen && huidigeModus == Oplosbaarheid) maxKoolstof = 6;
         int lengte = Rng(1, maxKoolstof);
         if (!AanHetOefenen) maxKoolstof = lengte + 10;
         bool cyclisch = Kans(cyclischKans) && MagRing(huidigeModus) && lengte >= 3;
@@ -745,26 +754,23 @@ public class OefenModusScript : MonoBehaviour
         goedAntwoordZichtbaar = false;
         geefOpKnop.sprite = zichtbaar;
         SetOefenen(true);
-        tekenScript.ResetMolecuul();
         if (Kans(KansAnorganisch(huidigeModus))) SpawnMolecuulAnorganisch();
         else SpawnMolecuul();
         antwoordKnop.SetActive(true);
         Knop3D.SetActive(huidigeModus != Polariteit && huidigeModus != Lewisstructuren && huidigeModus != Oplosbaarheid && huidigeModus != Modus.NaamgevingAndersom);
         JaNeeDropDown.gameObject.SetActive(huidigeModus == Polariteit || huidigeModus == Oplosbaarheid);
         undoKnop.SetActive(huidigeModus == NaamgevingAndersom);
+        antwoordVeld.gameObject.SetActive(huidigeModus == Naamgeving || huidigeModus == Molmassa);
+        klikAtomen = false;
+        klikBindingen = false;
         switch (huidigeModus)
         {
             case Naamgeving:
                 vraagTekst.text = $"Geef de systematische naam van dit molecuul!";
-                antwoordVeld.gameObject.SetActive(true);
                 break;
             case NaamgevingAndersom:
                 naamGevingAntwoord = naamGever.GenereerNaam();
                 vraagTekst.text = $"Teken de structuurformule van het molecuul met deze naam: {naamGevingAntwoord}";
-                foreach (var a in tekenScript.atomen)
-                {
-                    antwoordAtomen.Add(a);
-                }
                 getekendeBindingen.Clear();
                 getekendeAtomen.Clear();
                 tekenScript.acties.Clear();
@@ -776,7 +782,6 @@ public class OefenModusScript : MonoBehaviour
                 break;
             case Molmassa:
                 vraagTekst.text = "Geef de gemiddelde molaire massa van dit molecuul (in g/mol)!";
-                antwoordVeld.gameObject.SetActive(true);
                 break;
             case Waterstofbruggen:
                 antwoordOntvangende = true;
@@ -791,7 +796,6 @@ public class OefenModusScript : MonoBehaviour
             case Polariteit:
                 tekenScript3D.Render3D(true);
                 vraagTekst.text = "Beredeneer aan de hand van de ruimtelijke structuur of dit molecuul polair is.";
-                JaNeeDropDown.gameObject.SetActive(true);
                 break;
             case Oplosbaarheid:
                 tekenScript3D.Render3D(true);
@@ -1054,7 +1058,7 @@ public class OefenModusScript : MonoBehaviour
         }
         else if (huidigeModus == NaamgevingAndersom)
         {
-            string antwoord = naamGever.GenereerNaam(getekendeAtomen.Count);
+            string antwoord = naamGever.GenereerNaam(antwoordAtomen.Count);
             if (naamGevingAntwoord == antwoord)
             {
                 vraagTekst.text = $"Goedzo!";
