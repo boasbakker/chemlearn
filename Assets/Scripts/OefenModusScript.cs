@@ -172,34 +172,46 @@ public class OefenModusScript : MonoBehaviour
     public void SpawnMolecuul()
     {
         tekenScript.ResetMolecuul();
-    Opnieuw:
-        try
+        for (int poging = 0; poging < 1e4; poging++)
         {
-            RandomMolecuul();
-        }
-        catch
-        {
-            goto Opnieuw;
+            bool succes = false;
+            try
+            {
+                RandomMolecuul();
+                succes = true;
+            }
+            catch
+            {
+                succes = false;
+            }
+            if (succes) return;
         }
     }
     public void SpawnMolecuulAnorganisch()
     {
         tekenScript.ResetMolecuul();
-    Opnieuw:
-        try
+        for (int poging = 0; poging < 1e4; poging++)
         {
-            RandomMolecuulAnorganisch();
-            for (int i = 0; i < n; i++)
+            bool succes = false;
+            try
             {
-                if (tekenScript3D.OmringingsGetal(i) > 4)
+                RandomMolecuulAnorganisch();
+                succes = true;
+                for (int i = 0; i < n; i++)
                 {
-                    throw new();
+                    if (tekenScript3D.OmringingsGetal(i) > 4)
+                    {
+                        succes = false;
+                        tekenScript.ResetMolecuul();
+                        break;
+                    }
                 }
             }
-        }
-        catch
-        {
-            goto Opnieuw;
+            catch
+            {
+                succes = false;
+            }
+            if (succes) return;
         }
     }
 
