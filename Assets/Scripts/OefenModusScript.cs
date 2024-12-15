@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 using static InstellingenScript;
@@ -8,13 +7,9 @@ using static Definities.KarakteristiekeGroep;
 using static Definities.Modus;
 using static Definities;
 using static NaamGever;
-using System.Collections;
 using TMPro;
 using UnityEngine.UI.Extensions;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
-using NUnit.Framework.Constraints;
 using UnityEngine.UI;
-using Unity.VisualScripting;
 
 public class OefenModusScript : MonoBehaviour
 {
@@ -25,7 +20,7 @@ public class OefenModusScript : MonoBehaviour
     float eenheidsLengte = 30f;
     float edgeThreshold = 50f;
 
-    List<Vector3> posities = new();
+    static List<Vector3> posities = new();
     public static bool klikAtomen = false;
     public static bool klikMeerdereAtomen = false;
     public static bool klikBindingen = false;
@@ -148,10 +143,13 @@ public class OefenModusScript : MonoBehaviour
         // Get the size of the canvas
         Rect canvasRect = canvasTransform.rect;
 
+        float topThreshhold = edgeThreshold;
+        if (antwoordVeld.isActiveAndEnabled || JaNeeDropDown.isActiveAndEnabled) topThreshhold *= 2;
+
         // Calculate the bounds (left, right, top, bottom)
         float leftEdge = canvasRect.xMin + edgeThreshold;
         float rightEdge = canvasRect.xMax - edgeThreshold;
-        float topEdge = canvasRect.yMax - edgeThreshold;
+        float topEdge = canvasRect.yMax - topThreshhold;
         float bottomEdge = canvasRect.yMin + edgeThreshold;
 
         // Check if the position is near or over any edge
@@ -163,20 +161,22 @@ public class OefenModusScript : MonoBehaviour
         return false; // Position is within the safe zone
     }
 
-    // voor geavanceerdere random moleculen die soms in de knoop raken
-    /*void CheckAfstanden()
+    // was bedoeld voor geavanceerdere random moleculen die soms in de knoop raken, zou nu niet nodig moeten zijn
+    void CheckAfstanden()
     {
         ClosestPair3D closestPair3D = new();
-        if (closestPair3D.FindClosestPair(posities) < 0.99f) throw new System.Exception("Afstand <1");
-    }*/
+        if (closestPair3D.FindClosestPair(posities) < 0.99f)
+            throw new("Afstand <1");
+    }
     public void SpawnMolecuul()
     {
         tekenScript.ResetMolecuul();
-        for (int poging = 0; poging < 1e4; poging++)
+        for (int poging = 0; poging < 1e2; poging++)
         {
             bool succes = false;
             try
             {
+                posities.Clear();
                 RandomMolecuul();
                 succes = true;
             }
@@ -190,11 +190,12 @@ public class OefenModusScript : MonoBehaviour
     public void SpawnMolecuulAnorganisch()
     {
         tekenScript.ResetMolecuul();
-        for (int poging = 0; poging < 1e4; poging++)
+        for (int poging = 0; poging < 1e2; poging++)
         {
             bool succes = false;
             try
             {
+                posities.Clear();
                 RandomMolecuulAnorganisch();
                 succes = true;
                 for (int i = 0; i < n; i++)
@@ -298,6 +299,7 @@ public class OefenModusScript : MonoBehaviour
                 spawnAtoom(new(), new(0f, -1f), RandomSoort(ref atoomSoortenTotNuToe), type, 1);
             }
         }
+        CheckAfstanden();
         int massa = 0;
         foreach (var (pos, soort) in atomen)
         {
@@ -466,6 +468,20 @@ public class OefenModusScript : MonoBehaviour
             for (int j = 0; j < bindingenOver[i]; j++)
             {
                 if (j > 0 && cyclisch) break;
+                Vector2 richting = new(0f, j == 0 ? -1f : 1f);
+                Vector2 pos = new((lengte - 1) / -2f + i * 1f, 0f);
+                if (j >= 2)
+                {
+                    if (i == 0)
+                        richting = new(-1f, 0f);
+                    else richting = new(1f, 0f);
+                }
+                if (j == 3) richting.x *= -1;
+                if (cyclisch)
+                {
+                    pos = atomen[i].Item1;
+                    richting = richtingsVectoren[i];
+                }
                 if (Kans(groepKans))
                 {
                     List<KarakteristiekeGroep> groepen = new()
@@ -488,14 +504,6 @@ public class OefenModusScript : MonoBehaviour
                         groep = groepen[Rng(0, groepen.Count - 1)];
                     }
                     aantalBindingen++;
-                    Vector2 richting = new(0f, j == 0 ? -1f : 1f);
-                    Vector2 pos = new((lengte - 1) / -2f + i * 1f, 0f);
-
-                    if (cyclisch)
-                    {
-                        pos = atomen[i].Item1;
-                        richting = richtingsVectoren[i];
-                    }
 
                     if (groep == Keton)
                     {
@@ -540,18 +548,12 @@ public class OefenModusScript : MonoBehaviour
                 else if (Kans(zijTakKans) && aantalC < maxKoolstof)
                 {
                     aantalBindingen++;
-                    Vector2 richting = new(0f, j == 0 ? -1f : 1f);
-                    Vector2 pos = new((lengte - 1) / -2f + i * 1f, 0f);
-                    if (cyclisch)
-                    {
-                        pos = atomen[i].Item1;
-                        richting = richtingsVectoren[i];
-                    }
                     SpawnZijtak(maxKoolstof - aantalC, pos, richting, i);
                 }
             }
             bindingenOver[i] -= aantalBindingen;
         }
+        CheckAfstanden();
         int massa = 0;
         foreach (var (pos, soort) in atomen)
         {
@@ -652,6 +654,7 @@ public class OefenModusScript : MonoBehaviour
 
     public static void VerwijderAlles()
     {
+        posities.Clear();
         foreach (var a in getekendeAtomen)
         {
             Destroy(a.gameObject);

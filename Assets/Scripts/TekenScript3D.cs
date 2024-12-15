@@ -21,6 +21,7 @@ public class TekenScript3D : MonoBehaviour
         new () // voor bijvoorbeeld H2 of B#C, eerst atoom kunnen renderen
         {
             Vector3.forward,
+            Vector3.forward,
         },
 
         // Linear molecular geometry
